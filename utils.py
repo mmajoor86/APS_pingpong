@@ -5,10 +5,10 @@ import pandas as pd
 import streamlit as st
 from azure.storage.blob import BlobServiceClient
 
-
 # ============================================================
 # Generic Blob Helpers
 # ============================================================
+
 
 def download_file_from_blob(blob_name: str) -> pd.DataFrame:
     """Download a CSV from Azure Blob Storage into a DataFrame."""
@@ -104,9 +104,7 @@ def store_match_to_blob(
         ignore_index=True,
     )
 
-    df_matches["datetime"] = pd.to_datetime(
-        df_matches["datetime"]
-    )
+    df_matches["datetime"] = pd.to_datetime(df_matches["datetime"])
 
     df_matches = df_matches.sort_values(
         by="datetime",
@@ -125,6 +123,7 @@ def store_match_to_blob(
 # Standings
 # ============================================================
 
+
 def calculate_standings(df_matches: pd.DataFrame) -> pd.DataFrame:
 
     standings = {}
@@ -136,14 +135,32 @@ def calculate_standings(df_matches: pd.DataFrame) -> pd.DataFrame:
 
         standings.setdefault(
             p1,
-            {"wins": 0, "losses": 0},
+            {
+                "wins": 0,
+                "losses": 0,
+                "points_for": 0,
+                "points_against": 0,
+            },
         )
 
         standings.setdefault(
             p2,
-            {"wins": 0, "losses": 0},
+            {
+                "wins": 0,
+                "losses": 0,
+                "points_for": 0,
+                "points_against": 0,
+            },
         )
 
+        # Points
+        standings[p1]["points_for"] += row["score1"]
+        standings[p1]["points_against"] += row["score2"]
+
+        standings[p2]["points_for"] += row["score2"]
+        standings[p2]["points_against"] += row["score1"]
+
+        # Result
         if row["score1"] > row["score2"]:
             standings[p1]["wins"] += 1
             standings[p2]["losses"] += 1
@@ -160,16 +177,74 @@ def calculate_standings(df_matches: pd.DataFrame) -> pd.DataFrame:
         .rename(columns={"index": "player"})
     )
 
-    if len(df) > 0:
-        df["matches"] = df["wins"] + df["losses"]
+    df["matches"] = df["wins"] + df["losses"]
 
-        df["win_pct"] = (
-            df["wins"] / df["matches"]
-        ).round(3)
+    df["point_diff"] = df["points_for"] - df["points_against"]
 
-        df = df.sort_values(
-            ["wins", "win_pct"],
-            ascending=False,
-        )
+    df["win_pct"] = (df["wins"] / df["matches"]).round(3)
+
+    df = df.sort_values(
+        ["wins", "point_diff"],
+        ascending=False,
+    )
 
     return df
+
+
+def calculate_streaks(df_matches):
+    """
+    Returns:
+        hot_player
+        hot_streak
+        cold_player
+        cold_streak
+    """
+
+    df_matches = df_matches.sort_values("datetime")
+
+    current_win_streak = {}
+    current_loss_streak = {}
+
+    max_win_streak = {}
+    max_loss_streak = {}
+
+    for _, row in df_matches.iterrows():
+
+        winner = row["player1"] if row["score1"] > row["score2"] else row["player2"]
+
+        loser = row["player2"] if row["score1"] > row["score2"] else row["player1"]
+
+        # Initialise players
+        for player in [winner, loser]:
+            current_win_streak.setdefault(player, 0)
+            current_loss_streak.setdefault(player, 0)
+            max_win_streak.setdefault(player, 0)
+            max_loss_streak.setdefault(player, 0)
+
+        # Winner
+        current_win_streak[winner] += 1
+        current_loss_streak[winner] = 0
+
+        max_win_streak[winner] = max(
+            max_win_streak[winner],
+            current_win_streak[winner],
+        )
+
+        # Loser
+        current_loss_streak[loser] += 1
+        current_win_streak[loser] = 0
+
+        max_loss_streak[loser] = max(
+            max_loss_streak[loser],
+            current_loss_streak[loser],
+        )
+
+    hot_player = max(max_win_streak, key=max_win_streak.get)
+    cold_player = max(max_loss_streak, key=max_loss_streak.get)
+
+    return (
+        hot_player,
+        max_win_streak[hot_player],
+        cold_player,
+        max_loss_streak[cold_player],
+    )

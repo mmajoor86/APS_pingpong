@@ -7,6 +7,7 @@ import streamlit as st
 
 from utils import (
     calculate_standings,
+    calculate_streaks,
     read_matches_from_blob,
 )
 
@@ -69,12 +70,8 @@ def app():
     matches_played = {}
 
     for _, row in filtered_matches.iterrows():
-        matches_played[row["player1"]] = (
-            matches_played.get(row["player1"], 0) + 1
-        )
-        matches_played[row["player2"]] = (
-            matches_played.get(row["player2"], 0) + 1
-        )
+        matches_played[row["player1"]] = matches_played.get(row["player1"], 0) + 1
+        matches_played[row["player2"]] = matches_played.get(row["player2"], 0) + 1
 
     matches_played_df = pd.DataFrame(
         {
@@ -108,6 +105,40 @@ def app():
     )
 
     st.plotly_chart(fig_wins, use_container_width=True)
+
+    st.subheader("📜 League Facts")
+    first_match = matches.sort_values("datetime").iloc[0]
+
+    winner = (
+        first_match["player1"]
+        if first_match["score1"] > first_match["score2"]
+        else first_match["player2"]
+    )
+
+    hot_player, hot_streak, cold_player, cold_streak = calculate_streaks(matches)
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            "🎾 First Match •",
+            f"{first_match['datetime'].strftime('%d-%m-%Y')}",
+            f"🏆 {winner.title()}",
+        )
+
+    with col2:
+        st.metric(
+            "🔥 Hottest Streak",
+            hot_player.title(),
+            f"{hot_streak} consecutive wins",
+        )
+
+    with col3:
+        st.metric(
+            "🥶 Coldest Streak",
+            cold_player.title(),
+            f"{cold_streak} consecutive losses",
+        )
 
     # Recent matches
     st.subheader("📜 Match History")

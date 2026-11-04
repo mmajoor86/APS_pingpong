@@ -18,4 +18,3 @@ if selection == "Match Registration":
     page_1.app()
 elif selection == "📊 Rankings":
     page_2.app()
-
