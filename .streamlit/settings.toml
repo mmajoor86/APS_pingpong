@@ -1,0 +1,9 @@
+[theme]
+primaryColor = "#A569BD"  # A pleasant purple color
+backgroundColor = "#FDEDEC"  # A light pink background
+secondaryBackgroundColor = "#FADBD8"  # Slightly darker pink for sections
+textColor = "#2E4053"  # A dark blue-grey text for better readability
+font = "sans serif"
+
+[server]
+headless = true

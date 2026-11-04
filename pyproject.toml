@@ -1,0 +1,21 @@
+[project]
+name = "aps-pingpong"
+version = "0.1.0"
+description = "A streamlit app to monitor the APS Ping-Pong League"
+authors = [
+    {name = "Maarten"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pandas (>=3.1.0,<4.0.0)",
+    "streamlit (>=1.66.1,<2.0.0)",
+    "plotly (>=7.1.0,<8.0.0)",
+    "numpy (>=2.5.4,<3.0.0)",
+    "azure-storage-blob (>=12.31.1,<13.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
