@@ -45,7 +45,5 @@ def app():
 
             st.success("✅ Match recorded!")
 
-            st.write(df.tail())
-
         except Exception as e:
             st.exception(e)
