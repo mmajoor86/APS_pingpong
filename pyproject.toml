@@ -1,5 +1,6 @@
 [project]
 name = "aps-pingpong"
+
 version = "0.1.0"
 description = "A streamlit app to monitor the APS Ping-Pong League"
 authors = [
@@ -21,3 +22,6 @@ dependencies = [
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+package-mode = false
